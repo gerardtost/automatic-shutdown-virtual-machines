@@ -19,7 +19,7 @@ Configurable options:
 
 Requirements:
 
-- GNU / Linux operating system with systemd (does not work with the classic SysV Init).
+- GNU/Linux operating system with systemd (does not work with the classic SysV Init).
 - Python 3 installed with ```psutil``` and ```regex``` modules. Tested with Python 3.8.
 
 Instructions:
@@ -29,7 +29,7 @@ Instructions:
 
     - ```waiting_minutes```: Time in minutes to shut down each machine. Default ```5``` minutes.
     - ```max_graceful_times```: How many times will a full cycle of shutdown attempts be made before a forced shutdown. Default ```3``` times.
-    - ```shutdown_option```: If you want to shutdown the host host set ```True```. Default is ```False```.
+    - ```shutdown_option```: If you want to shutdown the host set ```True```. Default is ```False```.
     - If you want to log actions, set the ```log_active``` variable to ```True```. Then you will have to configure the ```log_path``` and the log file name ```log_name```.
 
 - Run the ```vmshutdown.py``` file by calling the Python interpreter (```python3 vmshutdown.py```). You can also give it command line permissions to run without calling the interpreter: ```chmod + x vmshutdown.py```. The file must be run as a user with permission to manage virtual machines with the ```virsh``` command. 
