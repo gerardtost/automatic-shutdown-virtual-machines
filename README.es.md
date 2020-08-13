@@ -19,7 +19,7 @@ Opciones configurables:
 Requisitos:
 
 - Sistema operativo GNU/Linux con systemd (no funciona con el clásico SysV Init).
-- Python 3 instalado con los módulos ```psutil``` y ```regex```. Probado con Python 3.8.
+- Python 3 instalado con los módulos ```psutil``` y ```regex```. Probado con Python 3.8 y Qemu 2.12 en CentOS 8.
 
 Instrucciones:
 
