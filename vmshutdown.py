@@ -76,15 +76,21 @@ def get_machines():
     for procdict in list_of_process_names:
         if procdict["name"] == "qemu-kvm":
         
-            cmd_string = str(procdict["cmdline"])
-            vm_name = re.search(r".guest=([a-z0-9A-Z_-]+),", cmd_string)
+            vm_name = ""
+            index_label = procdict["cmdline"].index("-name")
+            isolate = re.search(r"guest=([a-z0-9A-Z_-]+),", procdict["cmdline"][index_label+1])
 
-            list_of_virtual_machines.append({ "pid" : procdict["pid"], "name" : vm_name[1] })
+            if isolate:
+                vm_name = isolate[1]
+            else:
+                vm_name = procdict["cmdline"][index_label+1]
+
+            list_of_virtual_machines.append({ "pid" : procdict["pid"], "name" : vm_name })
             count += 1
 
-            print("Virtual machine {}: {}".format(count, vm_name[1]))
+            print("Virtual machine {}: {}".format(count, vm_name))
             if log_active:
-                write_log("Virtual machine {}: {}".format(count, vm_name[1]))
+                write_log("Virtual machine {}: {}".format(count, vm_name))
 
     print("Total virtual machines running: {}\n".format(count))
     if log_active:
