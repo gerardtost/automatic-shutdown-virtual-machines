@@ -108,7 +108,8 @@ def shutdown_host():
     if log_active:
             write_log("Shut down host...")
     try:
-        subprocess.run(["poweroff", "-f"], shell=True, check=True, capture_output=True)
+        subprocess.run(["systemctl", "-f", "poweroff"], shell=True, check=True, 
+    capture_output=True)
     except subprocess.CalledProcessError:
         print("Unable to shut down the host. Please, verify the user permissions.")
         if log_active:
