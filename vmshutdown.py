@@ -2,7 +2,7 @@
 # -*- coding: utf-8  -*-
 
 #
-# Easy KVM VMs shutdown 
+# Easy KVM VMs shutdown
 #
 # GNU General Public License (GPL) 3.0
 #
@@ -41,7 +41,8 @@ dir_log = "{}/{}".format(log_path, log_name)
 
 
 try:
-    subprocess.run(["command", "-v", "virsh"], shell=True, check=True, capture_output=True)
+    subprocess.run(["command", "-v", "virsh"], shell=True,
+                   check=True, capture_output=True)
 except subprocess.CalledProcessError:
     print("libvirt has not been installed: exiting")
     sys.exit(1)
@@ -49,43 +50,45 @@ except subprocess.CalledProcessError:
 if log_active:
     if not log_name:
         print("Please, verify set your log file name or disable log in the config section.")
-        sys.exit(1)        
+        sys.exit(1)
     elif not os.path.exists(log_path):
-        print("Wrong path: Please, verify your log path or disable log in the config section.")
-        sys.exit(1) 
+        print(
+            "Wrong path: Please, verify your log path or disable log in the config section.")
+        sys.exit(1)
 
 
-def write_log(line):  
-    """
-    Simple log
-    """
+def write_log(line):
+    """Simple log """
     with open(dir_log, "a") as log:
-        log.write("{} {}{}".format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), line, "\n"))
+        log.write("{} {}{}".format(datetime.datetime.now().strftime(
+            "%Y-%m-%d %H:%M:%S"), line, "\n"))
 
 
 def get_machines():
-    """
-    This function gets a list of processes and detects 
-    the libvirt virtual machines that are running now.
+    """This function gets a list of processes and detects 
+       the libvirt virtual machines that are running now.
+
     """
     for proc in psutil.process_iter():
         process_dict = proc.as_dict(attrs=['pid', 'name', 'cmdline'])
         list_of_process_names.append(process_dict)
 
     count = 0
-    for procdict in list_of_process_names:
-        if procdict["name"] == "qemu-kvm":
-        
+    for proc_select in list_of_process_names:
+        if proc_select["name"] == "qemu-kvm":
+
             vm_name = ""
-            index_label = procdict["cmdline"].index("-name")
-            isolate = re.search(r"guest=([a-z0-9A-Z_-]+),", procdict["cmdline"][index_label+1])
+            index_label = proc_select["cmdline"].index("-name")
+            isolate = re.search(r"guest=([a-z0-9A-Z_-]+),",
+                                proc_select["cmdline"][index_label+1])
 
             if isolate:
                 vm_name = isolate[1]
             else:
-                vm_name = procdict["cmdline"][index_label+1]
+                vm_name = proc_select["cmdline"][index_label+1]
 
-            list_of_virtual_machines.append({ "pid" : procdict["pid"], "name" : vm_name })
+            list_of_virtual_machines.append({"pid":
+                                             proc_select["pid"], "name": vm_name})
             count += 1
 
             print("Virtual machine {}: {}".format(count, vm_name))
@@ -100,16 +103,58 @@ def get_machines():
     return count
 
 
-def shutdown_host():
-    """
-    Shut down the host machine, if the user have permissions to do it.
-    """
-    print("Shut down host...") 
+def shutdown_graceful(machine_dict):
+    """Graceful shut down individual machine """
+    verify = subprocess.run(["virsh", "shutdown", "{}".format(
+        machine_dict["name"])], capture_output=True)
+    if "error:" in str(verify.stderr):
+        print("Error in trying shut down virtual machine {}. Please, verify the user permissions".format(
+            machine_dict["name"]))
+        if log_active:
+            write_log("Error in trying shut down virtual machine {}. Please, verify the user permissions".format(
+                machine_dict["name"]))
+        return None
+
+    print("Shut down machine {}".format(machine_dict['name']))
+    print("Waiting {} minutes\n".format(waiting_minutes))
     if log_active:
-            write_log("Shut down host...")
+        write_log("Shut down machine {}. Waiting {} minutes".format(
+            machine_dict["name"], waiting_minutes))
+
+    time.sleep(waiting)
+    return True
+
+
+def shutdown_forced(machine_dict):
+    """Forced shut down individual machine """
+    verify = subprocess.run(["virsh", "destroy", "{}".format(
+        machine_dict["name"])], capture_output=True)
+    if "error:" in str(verify.stderr):
+        print("Error in trying forced shut down virtual machine {}. Please, verify the user permissions".format(
+            machine_dict["name"]))
+        if log_active:
+            write_log("Error in trying forced shut down virtual machine {}. Please, verify the user permissions".format(
+                machine_dict["name"]))
+        return None
+
+    print("Force shut down: machine '{}' with PID {}".format(
+        machine_dict["name"], machine_dict["pid"]))
+    if log_active:
+        write_log("Force shut down: machine '{}' with PID {}".format(
+            machine_dict["name"], machine_dict["pid"]))
+    return True
+
+
+def shutdown_host():
+    """Shut down the host machine, if the user have permissions to do it.
+
+    """
+    print("Shut down host...")
+    if log_active:
+        write_log("Shut down host...")
     try:
-        subprocess.run(["systemctl", "-f", "poweroff"], shell=True, check=True, 
-    capture_output=True)
+        subprocess.run(["shutdown", "-h", "now"], shell=True,
+                       check=True, capture_output=True)
     except subprocess.CalledProcessError:
         print("Unable to shut down the host. Please, verify the user permissions.")
         if log_active:
@@ -132,18 +177,11 @@ for graceful in range(max_graceful_times):
     attempt += 1
     print("Attempt {}\n".format(attempt))
     if log_active:
-            write_log("Attempt {}".format(attempt))
+        write_log("Attempt {}".format(attempt))
 
     for machine in list_of_virtual_machines:
-        print("Shut down machine {}".format(machine['name']))
-        subprocess.run(["virsh", "shutdown", "{}".format(machine["name"])])
+        shutdown_graceful(machine)
 
-        print("Waiting {} minutes\n".format(waiting_minutes))
-        if log_active:
-            write_log("Shut down machine {}. Waiting {} minutes".format(machine["name"], waiting_minutes))
-
-        time.sleep(waiting)
-        
     list_of_virtual_machines.clear()
 
 
@@ -151,16 +189,17 @@ for graceful in range(max_graceful_times):
 get_machines()
 
 for machine in list_of_virtual_machines:
-    print("Force shut down: machine '{}' with PID {}".format(machine["name"], machine["pid"]))
-    if log_active:
-            write_log("Force shut down: machine '{}' with PID {}".format(machine["name"], machine["pid"]))
-
-    subprocess.run(["virsh", "destroy", "{}".format(machine["name"])])
+    shutdown_forced(machine)
     time.sleep(2)
 
-get_machines()
+if get_machines():
+    print("Cannot shut down virtual machines in current context")
+    if log_active:
+        write_log("Cannot shut down virtual machines in current context")
+    else:
+        print("No active virtual machines")
+        if log_active:
+            write_log("No active virtual machines")
 
 if shutdown_option:
     shutdown_host()
-
-    

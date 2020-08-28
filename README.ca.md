@@ -18,7 +18,7 @@ Opcions configurables:
 
 Requisits:
 
-- Sistema operatiu GNU/Linux amb systemd (no funciona amb el clàssic SysV Init).
+- Sistema operatiu GNU/Linux.
 - Python 3 instal·lat amb els mòduls ```psutil``` i ```regex```. Provat amb Python 3.8.3 i QEMU 2.12.0 en CentOS 8 i QEMU 1.5.3 en CentOS 7.
 
 Instruccions:
