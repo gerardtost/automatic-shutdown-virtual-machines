@@ -24,8 +24,8 @@ import regex as re
 
 waiting_minutes = 5
 max_graceful_times = 3
-shutdown_option = False
-log_active = True
+shutdown_option = True
+log_active = False
 log_name = "vmshutdown.log"
 log_path = "/home/base"
 
@@ -153,8 +153,8 @@ def shutdown_host():
     if log_active:
         write_log("Shut down host...")
     try:
-        subprocess.run(["shutdown", "-h", "now"], shell=True,
-                       check=True, capture_output=True)
+        subprocess.run(["shutdown", "-h", "now"], check=True,
+                       capture_output=True)
     except subprocess.CalledProcessError:
         print("Unable to shut down the host. Please, verify the user permissions.")
         if log_active:
@@ -174,7 +174,7 @@ for graceful in range(max_graceful_times):
 
         sys.exit(0)
 
-    attempt += 1
+    attempt = graceful + 1
     print("Attempt {}\n".format(attempt))
     if log_active:
         write_log("Attempt {}".format(attempt))
